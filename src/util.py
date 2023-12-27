@@ -2,6 +2,8 @@ import logging
 import json
 import datetime
 import uuid
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 class JsonFormatter(logging.Formatter):
     def format(self, record):
@@ -49,3 +51,75 @@ def order_diff(bid: int, ask: int, orders: list, best_bid: int, best_offer: int,
             to_order.append({'action': 'buy', 'type': 'limit', 'ticker': ticker, 'count': trade_qty, 'side': 'no', 'no_price': int(100 - ask), 'client_order_id': str(uuid.uuid4())})
     
     return to_order, to_cancel
+
+# for log replays
+
+def parse_log_file(log_file_path):
+    inventory_history = []
+    bid_history = []
+    ask_history = []
+
+    with open(log_file_path, 'r') as file:
+        for line in file:
+            try:
+                log_entry = json.loads(line)
+                message_type = log_entry.get("message_type")
+                message_value = log_entry.get("message_value")
+                timestamp = log_entry.get("timestamp")
+
+                if message_type == "InventoryDelta":
+                    inventory_history.append((timestamp, message_value))
+                elif message_type == "BidDelta":
+                    bid_history.append((timestamp, message_value))
+                elif message_type == "AskDelta":
+                    ask_history.append((timestamp, message_value))
+            except json.JSONDecodeError:
+                continue  # Skip lines that are not valid JSON
+
+    return inventory_history, bid_history, ask_history
+
+def plot_inventory_history(inventory_history):
+    # Parse timestamps and inventory values
+    timestamps = [datetime.strptime(record[0], '%Y-%m-%d %H:%M:%S') for record in inventory_history]
+    inventory_values = [record[1] for record in inventory_history]
+
+    # Plotting
+    plt.figure(figsize=(10, 6))
+    plt.plot(timestamps, inventory_values, marker='o', linestyle='-')
+    
+    # Formatting the plot
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M:%S'))
+    plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator())
+    plt.gcf().autofmt_xdate()  # Rotate date labels
+    plt.xlabel('Time')
+    plt.ylabel('Inventory Level')
+    plt.title('Inventory History Over Time')
+    plt.grid(True)
+    
+    # Show plot
+    plt.show()
+
+def plot_bid_ask_history(bid_history, ask_history):
+    # Parse timestamps and values
+    bid_timestamps = [datetime.strptime(record[0], '%Y-%m-%d %H:%M:%S') for record in bid_history]
+    bid_values = [record[1] for record in bid_history]
+    ask_timestamps = [datetime.strptime(record[0], '%Y-%m-%d %H:%M:%S') for record in ask_history]
+    ask_values = [record[1] for record in ask_history]
+
+    # Plotting
+    plt.figure(figsize=(10, 6))
+    plt.plot(bid_timestamps, bid_values, marker='o', linestyle='-', color='blue', label='Bid')
+    plt.plot(ask_timestamps, ask_values, marker='x', linestyle='-', color='red', label='Ask')
+
+    # Formatting the plot
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d %H:%M:%S'))
+    plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator())
+    plt.gcf().autofmt_xdate()  # Rotate date labels
+    plt.xlabel('Time')
+    plt.ylabel('Value')
+    plt.title('Bid and Ask History Over Time')
+    plt.legend()
+    plt.grid(True)
+    
+    # Show plot
+    plt.show()
