@@ -71,8 +71,9 @@ if __name__ == "__main__":
 
     # set up logging
     date = datetime.datetime.now().strftime("%Y-%m-%d")
-    logging.basicConfig(filename=log_file_path+str(date)+".log", level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')    
     ticker = sys.argv[1]
+    logging.basicConfig(filename=log_file_path+ticker+str(date)+".log", level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')    
+
     logging.info(f"Initializing Naive Market Maker with ticker {ticker}...")
 
     # initialize kalshi api
