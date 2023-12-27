@@ -15,11 +15,11 @@ class OrderingModule():
     def __safety_check(self, order: dict) -> None:
         if order['side'] == 'yes':
             try:
-                assert order['price'] < 100
+                assert order['yes_price'] < 100
             except AssertionError:
-                raise Exception(f"Order {order} has an invalid price of {order['price']}.")
+                raise Exception(f"Order {order} has an invalid price of {order['yes_price']}.")
         elif order['side'] == 'no':
             try:
-                assert order['price'] >= 0
+                assert order['no_price'] >= 0
             except AssertionError:
-                raise Exception(f"Order {order} has an invalid price of {order['price']}.")
+                raise Exception(f"Order {order} has an invalid price of {order['no_price']}.")
