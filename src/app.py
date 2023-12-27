@@ -10,7 +10,7 @@ from v1.ordering import OrderingModule
 from v1.portfolio import PortfolioModule
 from v1.spread import SpreadModule
 from credentials import EMAIL, PW
-from config import spread_module_config, log_file_path
+from config import spread_module_config, log_file_path, trade_qty
 
 def order_diff(bid: int, ask: int, orders: list, best_bid: int, best_offer: int) -> tuple:
     yes_price = bid
@@ -38,14 +38,14 @@ def order_diff(bid: int, ask: int, orders: list, best_bid: int, best_offer: int)
     # generate orders
     if not existing_yes:
         if bid >= best_offer:
-            to_order.append({'action': 'buy', 'type': 'limit', 'ticker': ticker, 'count': 1, 'side': 'yes', 'yes_price': int(best_offer-1), 'client_order_id': str(uuid.uuid4())})
+            to_order.append({'action': 'buy', 'type': 'limit', 'ticker': ticker, 'count': trade_qty, 'side': 'yes', 'yes_price': int(best_offer-1), 'client_order_id': str(uuid.uuid4())})
         else:
-            to_order.append({'action': 'buy', 'type': 'limit', 'ticker': ticker, 'count': 1, 'side': 'yes', 'yes_price': int(bid), 'client_order_id': str(uuid.uuid4())})
+            to_order.append({'action': 'buy', 'type': 'limit', 'ticker': ticker, 'count': trade_qty, 'side': 'yes', 'yes_price': int(bid), 'client_order_id': str(uuid.uuid4())})
     if not existing_no:
         if ask <= best_bid:
-            to_order.append({'action': 'buy', 'type': 'limit', 'ticker': ticker, 'count': 1, 'side': 'no', 'no_price': int(100 - best_bid+1), 'client_order_id': str(uuid.uuid4())})
+            to_order.append({'action': 'buy', 'type': 'limit', 'ticker': ticker, 'count': trade_qty, 'side': 'no', 'no_price': int(100 - best_bid+1), 'client_order_id': str(uuid.uuid4())})
         else:
-            to_order.append({'action': 'buy', 'type': 'limit', 'ticker': ticker, 'count': 1, 'side': 'no', 'no_price': int(100 - ask), 'client_order_id': str(uuid.uuid4())})
+            to_order.append({'action': 'buy', 'type': 'limit', 'ticker': ticker, 'count': trade_qty, 'side': 'no', 'no_price': int(100 - ask), 'client_order_id': str(uuid.uuid4())})
     
     return to_order, to_cancel
 
@@ -65,7 +65,7 @@ def loop(mdp: MarketDataModule, oms: OrderingModule, pf: PortfolioModule, sm: Sp
         logging.info(f"Placing order {order}")
         oms.place_order(order)
     
-    time.sleep(1)
+    time.sleep(2)  # sleeping is necessary because kalshi portfolio endpoint is slow to update after placing orders
 
 if __name__ == "__main__":
 
@@ -75,6 +75,7 @@ if __name__ == "__main__":
     ticker = sys.argv[1]
     logging.info(f"Initializing Naive Market Maker with ticker {ticker}...")
 
+    # initialize kalshi api
     config = kalshi_python.Configuration()
     config.host = "https://trading-api.kalshi.com/trade-api/v2"
 
@@ -86,7 +87,7 @@ if __name__ == "__main__":
 
     logging.info("Successfully logged in to Kalshi API. Beginning trading...")
 
-    # create objects
+    # create modules
     mdp = MarketDataModule(kalshi_api)
     oms = OrderingModule(kalshi_api)
     pf = PortfolioModule(kalshi_api)
@@ -94,6 +95,7 @@ if __name__ == "__main__":
 
     while True:
 
+        # provide liquidity until your computer dies
         try:
             loop(mdp, oms, pf, sm, ticker)
         except Exception as e:

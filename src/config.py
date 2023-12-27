@@ -4,3 +4,4 @@ spread_module_config = {
     "i_a": 0.5
 }
 log_file_path = "log/"
+trade_qty = 1
