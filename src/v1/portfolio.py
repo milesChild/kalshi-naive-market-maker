@@ -1,5 +1,4 @@
 import kalshi_python
-import numpy as np
 
 class PortfolioModule:
 
@@ -7,7 +6,17 @@ class PortfolioModule:
         self.api = api
 
     def get_inventory(self, ticker: str) -> int:
-        return np.random.randint(-10, 10)
+        inventory_response = self.api.get_positions(ticker=ticker)
+        position = 0
+        for posn in inventory_response.market_positions:
+            if posn.ticker == ticker:
+                position += posn.position
+        return position
 
     def get_open_orders(self, ticker: str) -> list:
-        return []
+        get_orders_response = self.api.get_orders(ticker=ticker)
+        orders = []
+        for order in get_orders_response.orders:
+            if order['status'] == "resting":
+                orders.append(order)
+        return orders
