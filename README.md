@@ -14,9 +14,9 @@ _____
 
 the naïve market maker is initialized with a fixed spread ***σ*** that is symmetrical about the last trading price ***$P_{last}$***, where:
 
-***$P_{bid}$*** = $P_{last} - σ / 2$
+$P_{bid}$ = $P_{last} - σ / 2$
 
-***$P_{ask}$*** = $P_{last} + σ / 2$
+$P_{ask}$ = $P_{last} + σ / 2$
 
 **inventory control**
 
