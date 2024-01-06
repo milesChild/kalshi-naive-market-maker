@@ -11,7 +11,7 @@ from v1.portfolio import PortfolioModule
 from v1.spread import SpreadModule
 from credentials import EMAIL, PW
 from config import spread_module_config, log_file_path, trade_qty
-from util import order_diff, JsonFormatter
+from util import order_diff, JsonFormatter, yes_safety_check, no_safety_check
 
 def loop(mdp: MarketDataModule, oms: OrderingModule, pf: PortfolioModule, sm: SpreadModule, ticker: str):
 
@@ -21,8 +21,11 @@ def loop(mdp: MarketDataModule, oms: OrderingModule, pf: PortfolioModule, sm: Sp
     open_orders = pf.get_open_orders(ticker)
     last_px = mdp.get_last(ticker)
     best_bid, best_offer = mdp.get_bbo(ticker)
+    orderbook = mdp.get_orderbook(ticker)
+    yes_check = yes_safety_check(orderbook, open_orders)
+    no_check = no_safety_check(orderbook, open_orders)
     bid, ask = sm.update_spread(last_px, cur_inv)
-    orders, cancels = order_diff(bid, ask, open_orders, best_bid, best_offer, ticker, trade_qty)
+    orders, cancels = order_diff(bid, ask, open_orders, best_bid, best_offer, ticker, trade_qty, yes_check, no_check)
     for cancel in cancels:
         logging.info({"message_type": "OrderCancel", "message_value": cancel})
         oms.cancel_order(cancel)
